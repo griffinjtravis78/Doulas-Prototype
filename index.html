@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enterprise End-of-Life Doula ERP & Case Management Platform</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        charcoal: { 950: '#0E0E0E', 900: '#161616', 800: '#222222', 700: '#2E2E2E' },
+                        gold: { 500: '#D4AF37', 600: '#C5A059', 400: '#E6CA65' }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-charcoal-950 text-gray-100 font-sans antialiased min-h-screen flex flex-col justify-between">
+
+    <!-- TOP NAVIGATION & ROLE SWITCHER -->
+    <header class="bg-charcoal-900 border-b border-gold-500/30 px-6 py-3 sticky top-0 z-50 shadow-lg">
+        <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-4">
+            <div class="flex items-center space-x-3">
+                <div class="w-9 h-9 rounded-lg bg-gold-500/10 border border-gold-500 flex items-center justify-center text-gold-400 font-bold">
+                    <i class="fa-solid fa-feather"></i>
+                </div>
+                <div>
+                    <h1 class="text-sm font-bold tracking-wider uppercase text-gold-400">Griffin Consulting ERP</h1>
+                    <p class="text-xs text-gray-400">End-of-Life Doula & Proxy Case Management System</p>
+                </div>
+            </div>
+
+            <!-- Role Selector -->
+            <div class="flex items-center space-x-2 bg-charcoal-950 p-1.5 rounded-lg border border-gold-500/20">
+                <span class="text-xs text-gray-400 px-2 font-medium"><i class="fa-solid fa-user-shield mr-1"></i> Role:</span>
+                <select id="roleSelector" onchange="switchRole(this.value)" class="bg-charcoal-800 text-gold-400 text-xs font-semibold px-3 py-1.5 rounded border border-gold-500/30 focus:outline-none">
+                    <option value="doula">1. Doula / Super Admin Dashboard</option>
+                    <option value="customer" selected>2. Customer View (Travis J. Griffin)</option>
+                    <option value="proxy">3. Proxy Master Execution Dashboard</option>
+                    <option value="subproxy">4. Sub-Proxy Collaborator Workspace</option>
+                    <option value="condolence">5. Public Condolence Guestbook</option>
+                </select>
+            </div>
+
+            <!-- Client Switcher (Simulating 5 Prestaged Customers) -->
+            <div class="flex items-center space-x-2 bg-charcoal-950 p-1.5 rounded-lg border border-gold-500/20">
+                <span class="text-xs text-gray-400 px-2 font-medium"><i class="fa-solid fa-users mr-1"></i> Active Case:</span>
+                <select id="clientSelector" onchange="switchClient(this.value)" class="bg-charcoal-800 text-gold-400 text-xs font-semibold px-3 py-1.5 rounded border border-gold-500/30 focus:outline-none">
+                    <option value="0">1. Travis J. Griffin, MPA (Phase 1 - Living)</option>
+                    <option value="1">2. Eleanor Vance (Phase 2 - Deceased w/ Proxy & Doula)</option>
+                    <option value="2">3. Arthur Pendelton (Phase 2 - Deceased w/ Proxy)</option>
+                    <option value="3">4. Margaret E. Holloway (Phase 2 - Deceased w/ Doula)</option>
+                    <option value="4">5. Chief Joseph Running Deer (Phase 1 - Tribal Mode)</option>
+                </select>
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN APP CONTAINER -->
+    <main class="max-w-7xl mx-auto w-full px-6 py-8 flex-grow">
+
+        <!-- STATUS BANNER -->
+        <div id="statusBanner" class="mb-6 p-4 rounded-xl bg-charcoal-900 border border-gold-500/40 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <i class="fa-solid fa-circle-info text-gold-400"></i>
+                <div>
+                    <h3 class="text-sm font-semibold text-gold-400" id="bannerTitle">Phase 1: The Legacy & Transition Phase</h3>
+                    <p class="text-xs text-gray-300" id="bannerDesc">Active case management, questionnaire branching, document vault, and advance planning.</p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-3">
+                <span id="phaseStatusBadge" class="px-3 py-1 rounded text-xs font-bold uppercase tracking-wider bg-amber-950 text-amber-300 border border-amber-800">
+                    Phase 1: Living
+                </span>
+                <button onclick="togglePhase()" class="text-xs bg-gold-500 hover:bg-gold-600 text-charcoal-950 font-bold px-3 py-1.5 rounded shadow">
+                    Toggle Phase 1 ⇄ Phase 2
+                </button>
+            </div>
+        </div>
+
+        <!-- DYNAMIC APP VIEW -->
+        <div id="appView"></div>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="bg-charcoal-900 border-t border-charcoal-800 py-4 text-center text-xs text-gray-500">
+        <p>Griffin Property and Holdings LLC (DBA Griffin Consulting) • Enterprise-Grade End-of-Life Doula ERP</p>
+    </footer>
+
+    <!-- PROTOTYPE JAVASCRIPT & PRESTAGED DATABASE -->
+    <script>
+        // 5 Prestaged Customers Database
+        const clients = [
+            {
+                id: 0,
+                name: "Travis J. Griffin, MPA",
+                dob: "July 18, 1978",
+                mode: "Human Doula Mode",
+                doula: "Sarah Jenkins, INELDA Certified",
+                phase: "Phase 1: Legacy & Transition",
+                isDeceased: false,
+                proxy: "Krystal Griffin (Sister)",
+                subProxies: ["Geneva Polson", "Robert Vance"],
+                vital: { birthplace: "Joplin, MO", education: "Master of Public Administration, Walden University", military: "USMC - MOS 3043 Supply Administration" },
+                parents: [{ rel: "Mother", name: "Mary E. Griffin" }, { rel: "Father", name: "John T. Griffin" }],
+                attire: "Navy blue tailored suit with light blue silk tie. Stored in master bedroom cedar closet, top shelf inside black garment bag.",
+                jewelry: "Gold wedding band. Kept in home floor safe in study. Combination in password manager.",
+                flowers: "White lilies and cedar boughs. In lieu of flowers, donate to Tribal program.",
+                stories: [
+                    { id: 1, title: "The First Harvest on the Family Farm", speaker: "Uncle Robert", text: "Reflecting on early lessons in land stewardship across Southwest Missouri..." },
+                    { id: 2, title: "Service in the United States Marine Corps", speaker: "Sgt. Michael Vance", text: "Recalling core values of discipline and supply administration..." }
+                ],
+                checklist: [
+                    { id: 1, task: "Contact Pre-Selected Funeral Home (Dulle-Trimble)", status: "Pending Phase 2", category: "Immediate 24-Hour", assignedTo: "Unassigned", comments: [] },
+                    { id: 2, task: "Notify Military Honors Detail & Request DD-214 Vault File", status: "Ready", category: "Military & VA", assignedTo: "Krystal Griffin", comments: ["DD-214 verified in vault."] },
+                    { id: 3, task: "Coordinate Clergy & Mass with St. Peter Catholic Church", status: "Pending", category: "Service Coordination", assignedTo: "Geneva Polson", comments: [] },
+                    { id: 4, task: "Notify Bank of America & Edward Jones Accounts", status: "Pending", category: "Financial Lockdown", assignedTo: "Unassigned", comments: [] }
+                ]
+            },
+            {
+                id: 1,
+                name: "Eleanor Vance",
+                dob: "November 12, 1952",
+                mode: "Human Doula Mode",
+                doula: "Sarah Jenkins, INELDA Certified",
+                phase: "Phase 2: Bereavement & Execution",
+                isDeceased: true,
+                proxy: "Marcus Vance (Son)",
+                subProxies: ["Elena Vance", "David Miller"],
+                vital: { birthplace: "St. Louis, MO", education: "Bachelor of Arts, Washington University", military: "N/A" },
+                parents: [{ rel: "Mother", name: "Clara Mae Vance" }, { rel: "Father", name: "Arthur Vance" }],
+                attire: "Burgundy velvet dress with pearl brooch.",
+                jewelry: "Pearl necklace, removed prior to burial and given to Elena Vance.",
+                flowers: "Red roses and eucalyptus.",
+                stories: [
+                    { id: 1, title: "The St. Louis Symphony Years", speaker: "Elena Vance", text: "Sharing memories of community music and family gatherings..." }
+                ],
+                checklist: [
+                    { id: 1, task: "Contact Pre-Selected Funeral Home (Bopp Chapel)", status: "Completed", category: "Immediate 24-Hour", assignedTo: "Marcus Vance", comments: ["Mortuary notified at 0800."] },
+                    { id: 2, task: "Coordinate Funeral Mass with St. Raymond Cathedral", status: "In Progress", category: "Service Coordination", assignedTo: "David Miller", comments: ["Father Thomas confirmed mass for Friday."] },
+                    { id: 3, task: "Lock Down Chase Bank & Vanguard Accounts", status: "Pending", category: "Financial Lockdown", assignedTo: "Unassigned", comments: [] }
+                ]
+            },
+            {
+                id: 2,
+                name: "Arthur Pendelton",
+                dob: "January 4, 1945",
+                mode: "Virtual Doula Mode",
+                doula: "None (Self-Guided / AI Flow)",
+                phase: "Phase 2: Bereavement & Execution",
+                isDeceased: true,
+                proxy: "Clara Pendelton (Spouse)",
+                subProxies: ["Thomas Pendelton"],
+                vital: { birthplace: "Kansas City, MO", education: "Juris Doctor, UMKC", military: "U.S. Army Veteran" },
+                parents: [{ rel: "Mother", name: "Sarah Pendelton" }, { rel: "Father", name: "James Pendelton" }],
+                attire: "Charcoal business suit.",
+                jewelry: "Class ring, kept by spouse.",
+                flowers: "Yellow carnations.",
+                stories: [
+                    { id: 1, title: "Practicing Law in Jackson County", speaker: "Thomas Pendelton", text: "Recalling decades of legal service and community advocacy..." }
+                ],
+                checklist: [
+                    { id: 1, task: "Contact Funeral Home & Request Death Certificates", status: "Completed", category: "Immediate 24-Hour", assignedTo: "Clara Pendelton", comments: ["Ordered 10 certified copies."] },
+                    { id: 2, task: "Submit VA Burial Benefits & Flag Request", status: "In Progress", category: "Military & VA", assignedTo: "Thomas Pendelton", comments: ["DD-214 attached."] }
+                ]
+            },
+            {
+                id: 3,
+                name: "Margaret E. Holloway",
+                dob: "August 22, 1960",
+                mode: "Human Doula Mode",
+                doula: "Elena Rostova, End-of-Life Doula",
+                phase: "Phase 2: Bereavement & Execution",
+                isDeceased: true,
+                proxy: "Unassigned Proxy",
+                subProxies: ["Local Family Team"],
+                vital: { birthplace: "Springfield, MO", education: "MSN, Drury University", military: "N/A" },
+                parents: [{ rel: "Mother", name: "Martha Holloway" }, { rel: "Father", name: "Robert Holloway" }],
+                attire: "Cream silk blouse and black slacks.",
+                jewelry: "Silver nurse's pin, pinned to lapel.",
+                flowers: "Mixed wildflowers.",
+                stories: [
+                    { id: 1, title: "Decades of Nursing Care at CoxHealth", speaker: "Elena Rostova", text: "Honoring a lifetime of healing and compassion..." }
+                ],
+                checklist: [
+                    { id: 1, task: "Emergency Human Doula Post-Passing Onboarding", status: "Active", category: "Doula Coordination", assignedTo: "Elena Rostova", comments: ["Doula stepped in post-passing per proxy request."] }
+                ]
+            },
+            {
+                id: 4,
+                name: "Chief Joseph Running Deer",
+                dob: "May 15, 1942",
+                mode: "Virtual Doula Mode",
+                doula: "None (Tribal Traditional Governance)",
+                phase: "Phase 1: Legacy & Transition",
+                isDeceased: false,
+                proxy: "Ahanu Running Deer (Son)",
+                subProxies: ["Elan Running Deer"],
+                vital: { birthplace: "Tulsa, OK", education: "Bacone College", military: "U.S. Navy" },
+                parents: [{ rel: "Mother", name: "Tall Pine Running Deer" }, { rel: "Father", name: "Strong Wolf Running Deer" }],
+                attire: "Traditional buckskin regalia and silver medallion.",
+                jewelry: "Family turquoise bracelet stored in cedar chest.",
+                flowers: "Traditional cedar boughs, sage, and tobacco for blessing rites.",
+                stories: [
+                    { id: 1, title: "Preserving Tribal Language and Traditions", speaker: "Ahanu Running Deer", text: "Passing down oral histories and clan governance..." }
+                ],
+                checklist: [
+                    { id: 1, task: "Notify Tribal Elders and Medicine Person", status: "Pending Phase 2", category: "Tribal Rites", assignedTo: "Ahanu Running Deer", comments: [] }
+                ]
+            }
+        ];
+
+        let currentClientIndex = 0;
+        let activeRole = "customer";
+
+        function switchRole(role) {
+            activeRole = role;
+            renderView();
+        }
+
+        function switchClient(index) {
+            currentClientIndex = parseInt(index);
+            updateBanner();
+            renderView();
+        }
+
+        function togglePhase() {
+            const client = clients[currentClientIndex];
+            client.isDeceased = !client.isDeceased;
+            client.phase = client.isDeceased ? "Phase 2: Bereavement & Execution" : "Phase 1: Legacy & Transition";
+            updateBanner();
+            renderView();
+        }
+
+        function updateBanner() {
+            const client = clients[currentClientIndex];
+            const badge = document.getElementById('phaseStatusBadge');
+            const title = document.getElementById('bannerTitle');
+            const desc = document.getElementById('bannerDesc');
+
+            if (client.isDeceased) {
+                badge.className = "px-3 py-1 rounded text-xs font-bold uppercase tracking-wider bg-emerald-950 text-emerald-300 border border-emerald-800";
+                badge.innerText = "Phase 2: Deceased / Execution Active";
+                title.innerText = `Active Case: ${client.name} — Phase 2: Bereavement & Execution`;
+                desc.innerText = `System locked to Phase 1. Proxy administrative ownership active. Mode: ${client.mode} | Doula: ${client.doula}`;
+            } else {
+                badge.className = "px-3 py-1 rounded text-xs font-bold uppercase tracking-wider bg-amber-950 text-amber-300 border border-amber-800";
+                badge.innerText = "Phase 1: Living / Legacy";
+                title.innerText = `Active Case: ${client.name} — Phase 1: Legacy & Transition`;
+                desc.innerText = `Active case management, questionnaire branching, document vault, and advance planning. Mode: ${client.mode}`;
+            }
+        }
+
+        function assignTask(taskId, subProxyName) {
+            const client = clients[currentClientIndex];
+            const task = client.checklist.find(t => t.id === taskId);
+            if (task) {
+                task.assignedTo = subProxyName;
+                alert(`Task assigned to ${subProxyName} successfully!`);
+                renderView();
+            }
+        }
+
+        function addComment(taskId) {
+            const client = clients[currentClientIndex];
+            const input = document.getElementById(`commentInput-${taskId}`);
+            if (input && input.value.trim() !== '') {
+                const task = client.checklist.find(t => t.id === taskId);
+                if (task) {
+                    task.comments.push(input.value.trim());
+                    input.value = '';
+                    renderView();
+                }
+            }
+        }
+
+        function renderView() {
+            const client = clients[currentClientIndex];
+            const container = document.getElementById('appView');
+            let html = '';
+
+            // 1. DOULA / SUPER ADMIN DASHBOARD
+            if (activeRole === 'doula') {
+                html = `
+                    <div class="space-y-6">
+                        <div class="bg-charcoal-900 border border-charcoal-800 rounded-xl p-6 shadow-lg">
+                            <h2 class="text-base font-bold text-gold-400 mb-2"><i class="fa-solid fa-user-tie mr-2"></i>Doula Directory & Caseload Management Dashboard</h2>
+                            <p class="text-xs text-gray-400 mb-6">Manage monthly SaaS subscriptions, client approvals, fee structures (hourly vs flat package), and emergency post-passing escalation requests.</p>
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                                <div class="p-4 bg-charcoal-950 rounded-lg border border-charcoal-800">
+                                    <p class="text-xs text-gray-400">Total Caseload</p>
+                                    <p class="text-xl font-bold text-white mt-1">5 Active Clients</p>
+                                </div>
+                                <div class="p-4 bg-charcoal-950 rounded-lg border border-charcoal-800">
+                                    <p class="text-xs text-gray-400">Subscription Status</p>
+                                    <p class="text-xl font-bold text-emerald-400 mt-1">Active ($49/mo)</p>
+                                </div>
+                                <div class="p-4 bg-charcoal-950 rounded-lg border border-charcoal-800">
+                                    <p class="text-xs text-gray-400">Current Client Mode</p>
+                                    <p class="text-xl font-bold text-blue-400 mt-1">${client.mode}</p>
+                                </div>
+                                <div class="p-4 bg-charcoal-950 rounded-lg border border-charcoal-800">
+                                    <p class="text-xs text-gray-400">Phase Authority</p>
+                                    <p class="text-xl font-bold text-gold-400 mt-1">Doula Exclusive</p>
+                                </div>
+                            </div>
+
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-left text-xs">
+                                    <thead class="bg-charcoal-950 text-gray-400 uppercase tracking-wider border-b border-charcoal-800">
+                                        <tr>
+                                            <th class="p-3">Client Name</th>
+                                            <th class="p-3">Support Track</th>
+                                            <th class="p-3">Assigned Doula</th>
+                                            <th class="p-3">Phase Status</th>
+                                            <th class="p-3">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-charcoal-800">
+                                        ${clients.map((c, idx) => `
+                                            <tr class="${idx === currentClientIndex ? 'bg-charcoal-800/50' : ''}">
+                                                <td class="p-3 font-semibold text-white">${c.name}</td>
+                                                <td class="p-3 text-blue-400">${c.mode}</td>
+                                                <td class="p-3 text-gold-400">${c.doula}</td>
+                                                <td class="p-3"><span class="px-2 py-0.5 rounded ${c.isDeceased ? 'bg-emerald-950 text-emerald-300' : 'bg-amber-950 text-amber-300'} font-bold">${c.phase}</span></td>
+                                                <td class="p-3">
+                                                    <button onclick="switchClient(${idx}); switchRole('customer');" class="bg-charcoal-700 text-gray-200 px-2.5 py-1 rounded hover:bg-gold-500 hover:text-charcoal-950 font-bold mr-1">View Case</button>
+                                                    <button onclick="switchClient(${idx}); togglePhase();" class="bg-gold-500 text-charcoal-950 px-2.5 py-1 rounded hover:bg-gold-600 font-bold">Toggle Phase</button>
+                                                </td>
+                                            </tr>
+                                        `).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } 
+            // 2. CUSTOMER VIEW
+            else if (activeRole === 'customer') {
+                html = `
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <!-- Left Panel: Vital & Genealogical Summary -->
+                        <div class="bg-charcoal-900 border border-charcoal-800 rounded-xl p-6 shadow-md space-y-4">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-12 h-12 rounded-full bg-gold-500/10 border border-gold-500 flex items-center justify-center text-gold-400 font-bold">
+                                    ${client.name.split(' ').map(n => n[0]).join('').substring(0, 2)}
+                                </div>
+                                <div>
+                                    <h2 class="text-sm font-bold text-white">${client.name}</h2>
+                                    <p class="text-[10px] text-gold-400">Primary Customer Record</p>
+                                </div>
+                            </div>
+                            <div class="text-xs space-y-2 border-t border-charcoal-800 pt-3 text-gray-300">
+                                <p><strong>DOB:</strong> ${client.dob}</p>
+                                <p><strong>Birthplace:</strong> ${client.vital.birthplace}</p>
+                                <p><strong>Education:</strong> ${client.vital.education}</p>
+                                <p><strong>Military:</strong> ${client.vital.military}</p>
+                                <p><strong>Parents:</strong> ${client.parents.map(p => `${p.rel}: ${p.name}`).join(' | ')}</p>
+                            </div>
+                            <div class="border-t border-charcoal-800 pt-3 text-xs">
+                                <p class="text-gold-400 font-bold">Assigned Doula:</p>
+                                <p class="text-gray-300">${client.doula} (${client.mode})</p>
+                            </div>
+                        </div>
+
+                        <!-- Right Panel: Comprehensive Input Modules & Stories -->
+                        <div class="md:col-span-2 space-y-6">
+                            <!-- Attire, Jewelry & Aesthetics Card -->
+                            <div class="bg-charcoal-900 border border-charcoal-800 rounded-xl p-6">
+                                <h3 class="text-sm font-bold text-gold-400 mb-3"><i class="fa-solid fa-shirt mr-2"></i>Attire, Jewelry, Storage Locations & Floral Aesthetics</h3>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                                    <div class="p-3 bg-charcoal-950 rounded border border-charcoal-800">
+                                        <p class="font-bold text-white mb-1"><i class="fa-solid fa-vest text-gold-500 mr-1"></i> Burial Attire & Storage:</p>
+                                        <p class="text-gray-300">${client.attire}</p>
+                                    </div>
+                                    <div class="p-3 bg-charcoal-950 rounded border border-charcoal-800">
+                                        <p class="font-bold text-white mb-1"><i class="fa-solid fa-ring text-gold-500 mr-1"></i> Jewelry Instructions:</p>
+                                        <p class="text-gray-300">${client.jewelry}</p>
+                                    </div>
+                                    <div class="md:col-span-2 p-3 bg-charcoal-950 rounded border border-charcoal-800">
+                                        <p class="font-bold text-white mb-1"><i class="fa-solid fa-seedling text-gold-500 mr-1"></i> Floral Preferences & Botanical Design:</p>
+                                        <p class="text-gray-300">${client.flowers}</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Historical Stories & Speaker Assignment Card -->
+                            <div class="bg-charcoal-900 border border-charcoal-800 rounded-xl p-6">
+                                <h3 class="text-sm font-bold text-gold-400 mb-3"><i class="fa-solid fa-book-open mr-2"></i>Curated Historical Stories (Numbered & Assigned)</h3>
+                                <div class="space-y-3">
+                                    ${client.stories.map(s => `
+                                        <div class="p-3 bg-charcoal-950 rounded border border-charcoal-800 text-xs">
+                                            <div class="flex justify-between font-bold text-white mb-1">
+                                                <span>Story #${s.id}: ${s.title}</span>
+                                                <span class="text-gold-400">Assigned Speaker: ${s.speaker}</span>
+                                            </div>
+                                            <p class="text-gray-400">${s.text}</p>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } 
+            // 3. PROXY MASTER EXECUTION DASHBOARD
+            else if (activeRole === 'proxy') {
+                html = `
+                    <div class="space-y-6">
+                        <div class="bg-charcoal-900 border border-charcoal-800 rounded-xl p-6">
+                            <div class="flex justify-between items-center mb-4">
+                                <div>
+                                    <h2 class="text-base font-bold text-gold-400"><i class="fa-solid fa-clipboard-check mr-2"></i>Proxy Master Execution Dashboard — ${client.name}</h2>
+                                    <p class="text-xs text-gray-400 mt-0.5">Primary Proxy: ${client.proxy} | Status: <span class="text-emerald-400 font-bold">${client.phase}</span></p>
+                                </div>
+                                <span class="text-xs bg-blue-950 text-blue-300 border border-blue-800 px-3 py-1 rounded font-bold">${client.mode}</span>
+                            </div>
+                            
+                            <div class="space-y-4">
+                                ${client.checklist.map(chk => `
+                                    <div class="p-4 bg-charcoal-950 rounded-lg border border-charcoal-800 text-xs space-y-3">
+                                        <div class="flex items-center justify-between">
+                                            <div class="flex items-center space-x-3">
+                                                <input type="checkbox" ${client.isDeceased ? '' : 'disabled'} class="rounded bg-charcoal-800 border-gold-500 text-gold-500">
+                                                <div>
+                                                    <p class="font-bold text-white text-sm">${chk.task}</p>
+                                                    <span class="text-[10px] text-gold-400 uppercase font-semibold">${chk.category}</span>
+                                                </div>
+                                            </div>
+                                            <div class="flex items-center space-x-2">
+                                                <span class="text-gray-400">Assign to Sub-Proxy:</span>
+                                                <select onchange="assignTask(${chk.id}, this.value)" class="bg-charcoal-800 text-gold-400 px-2 py-1 rounded border border-gold-500/30">
+                                                    <option value="${chk.assignedTo}">${chk.assignedTo}</option>
+                                                    ${client.subProxies.map(sp => `<option value="${sp}">${sp}</option>`).join('')}
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <!-- Comments / Audit Log -->
+                                        <div class="border-t border-charcoal-800 pt-2">
+                                            <p class="text-[10px] text-gray-400 font-semibold mb-1">Task Comments & Audit Notes:</p>
+                                            ${chk.comments.length > 0 ? chk.comments.map(c => `<p class="text-gray-300 italic mb-1">• ${c}</p>`).join('') : '<p class="text-gray-500 italic">No comments posted yet.</p>'}
+                                            <div class="flex mt-2 space-x-2">
+                                                <input id="commentInput-${chk.id}" type="text" placeholder="Add status update or comment..." class="flex-grow bg-charcoal-900 border border-charcoal-800 rounded px-3 py-1.5 text-xs text-gray-200 focus:outline-none focus:border-gold-500">
+                                                <button onclick="addComment(${chk.id})" class="bg-gold-500 text-charcoal-950 font-bold px-4 py-1.5 rounded hover:bg-gold-600">Post</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } 
+            // 4. SUB-PROXY COLLABORATOR WORKSPACE
+            else if (activeRole === 'subproxy') {
+                html = `
+                    <div class="bg-charcoal-900 border border-charcoal-800 rounded-xl p-6 space-y-4">
+                        <h2 class="text-base font-bold text-gold-400"><i class="fa-solid fa-users-viewfinder mr-2"></i>Sub-Proxy Collaborator Workspace — ${client.name}</h2>
+                        <p class="text-xs text-gray-400">You have been granted restricted view access to historical files and write-access to your assigned tasks by Proxy <strong>${client.proxy}</strong>.</p>
+                        
+                        <div class="p-4 bg-charcoal-950 rounded-lg border border-charcoal-800 text-xs space-y-2">
+                            <p class="font-bold text-emerald-400 mb-2">Assigned Checklist Tasks for Your Review:</p>
+                            ${client.checklist.map(t => `
+                                <div class="p-2.5 bg-charcoal-900 rounded border border-charcoal-800 flex justify-between items-center">
+                                    <span>${t.task}</span>
+                                    <span class="text-gold-400 font-bold">Assigned To: ${t.assignedTo}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            } 
+            // 5. PUBLIC CONDOLENCE GUESTBOOK
+            else if (activeRole === 'condolence') {
+                html = `
+                    <div class="bg-charcoal-900 border border-charcoal-800 rounded-xl p-6 text-center max-w-2xl mx-auto space-y-4">
+                        <div class="w-16 h-16 rounded-full bg-gold-500/10 border border-gold-500 mx-auto flex items-center justify-center text-gold-400 text-xl font-bold">
+                            ${client.name.split(' ').map(n => n[0]).join('').substring(0, 2)}
+                        </div>
+                        <h2 class="text-xl font-bold text-white">In Loving Memory of ${client.name}</h2>
+                        <p class="text-xs text-gold-400">${client.dob} – ${client.isDeceased ? '[Rest in Peace]' : '[Active Legacy Planning]'}</p>
+                        <p class="text-xs text-gray-300 leading-relaxed">
+                            Welcome to the public memorial page and digital condolence guestbook. View approved service times, read historical stories, and leave messages for the family of ${client.name}.
+                        </p>
+                        <div class="pt-4 border-t border-charcoal-800 text-left">
+                            <textarea placeholder="Leave a condolence message or memory..." class="w-full bg-charcoal-950 border border-charcoal-800 rounded-lg p-3 text-xs text-gray-200 focus:outline-none focus:border-gold-500 mb-3"></textarea>
+                            <button class="bg-gold-500 text-charcoal-950 font-bold px-4 py-2 rounded text-xs hover:bg-gold-600 transition">Submit Condolence Message</button>
+                        </div>
+                    </div>
+                `;
+            }
+
+            container.innerHTML = html;
+        }
+
+        // Initialize on load
+        window.onload = () => {
+            updateBanner();
+            renderView();
+        };
+    </script>
+</body>
+</html>
